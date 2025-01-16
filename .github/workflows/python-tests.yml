@@ -39,6 +39,7 @@ jobs:
       - name: Verify environment variables
         shell: bash
         run: |
+          set -e
           source $GITHUB_ENV
           if [[ -z "$DB_PASSWORD" || -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_HOST" || -z "$DB_PORT" ]]; then
             echo "Error: One or more environment variables are not set!"
@@ -52,30 +53,43 @@ jobs:
             echo "DB_PORT=$DB_PORT"
           fi
 
-      # Шаг 6: Запуск службы PostgreSQL и настройка базы данных
+      # Шаг 6: Отладка содержимого $GITHUB_ENV
+      - name: Debug GITHUB_ENV
+        run: cat $GITHUB_ENV
+
+      # Шаг 7: Запуск службы PostgreSQL и настройка базы данных
       - name: Start PostgreSQL service
         run: |
+          set -e
           sudo service postgresql start
           sleep 10
           echo "Creating database and user..."
-          sudo -u postgres psql -v ON_ERROR_STOP=1 <<-EOF
-            CREATE DATABASE ${DB_NAME};
-            CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
-            GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
+          sudo -u postgres psql -v ON_ERROR_STOP=1 \
+            -v db_name="$DB_NAME" \
+            -v db_user="$DB_USER" \
+            -v db_password="$DB_PASSWORD" <<-EOF
+            CREATE DATABASE :db_name;
+            CREATE USER :db_user WITH PASSWORD ':db_password';
+            GRANT ALL PRIVILEGES ON DATABASE :db_name TO :db_user;
           EOF
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
-      # Шаг 7: Установка Python-зависимостей
+      # Шаг 8: Установка Python-зависимостей
       - name: Install dependencies
         run: |
           python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      # Шаг 8: Запуск тестов
+      # Шаг 9: Запуск тестов
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
