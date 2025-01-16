@@ -27,10 +27,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Clear pytest cache
-        run: pytest --cache-clear
-
       - name: Run tests
         run: |
           export PYTHONPATH=.
-          pytest
+          pytest --cache-clear  # Очистить кэш и сразу запустить тесты
+
