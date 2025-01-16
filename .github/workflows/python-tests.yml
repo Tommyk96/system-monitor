@@ -27,6 +27,14 @@ jobs:
           sudo apt-get install -y libpq-dev libx11-dev libxext-dev  # Устанавливаем дополнительные зависимости
           sudo apt-get install -y postgresql postgresql-contrib  # Устанавливаем PostgreSQL
 
+      - name: Set up environment variables
+        run: |
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+          echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
+
       - name: Start PostgreSQL service
         run: |
           sudo service postgresql start  # Запускаем PostgreSQL
@@ -36,14 +44,6 @@ jobs:
           sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};"
           sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
           sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
-
-      - name: Set up environment variables
-        run: |
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
-          echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
