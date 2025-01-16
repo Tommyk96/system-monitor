@@ -30,15 +30,26 @@ jobs:
       - name: Start PostgreSQL service
         run: |
           sudo service postgresql start  # Запускаем PostgreSQL
-          sudo -u postgres psql -c "CREATE DATABASE test_db;"  # Создаем тестовую базу данных
-          sudo -u postgres psql -c "CREATE USER test_user WITH PASSWORD 'test_password';"  # Создаем пользователя
-          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE test_db TO test_user;"  # Назначаем права
+          # Ждем несколько секунд, чтобы PostgreSQL был готов
+          sleep 10
+          # Создаем тестовую базу данных и пользователя
+          sudo -u postgres psql -c "CREATE DATABASE test_db;"
+          sudo -u postgres psql -c "CREATE USER test_user WITH PASSWORD 'test_password';"
+          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE test_db TO test_user;"
+
+      - name: Set up environment variables
+        run: |
+          echo "DB_PASSWORD=test_password" >> $GITHUB_ENV
+          echo "DB_NAME=test_db" >> $GITHUB_ENV
+          echo "DB_USER=test_user" >> $GITHUB_ENV
+          echo "DB_HOST=localhost" >> $GITHUB_ENV
+          echo "DB_PORT=5432" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
           python -m ensurepip --upgrade  # Обновляем pip, если необходимо
           python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt  # Устанавливаем без кэша
+          pip install --no-cache-dir -r requirements.txt  # Устанавливаем зависимости без кэша
 
       - name: Run tests
         run: |
