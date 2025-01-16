@@ -13,24 +13,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Check out the repository to the runner
       - name: Check out repository
         uses: actions/checkout@v3
 
-      # Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      # Install system dependencies, including PostgreSQL
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libpq-dev libx11-dev libxext-dev
           sudo apt-get install -y postgresql postgresql-contrib
 
-      # Set environment variables from GitHub Secrets
       - name: Set up environment variables
         run: |
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
@@ -39,38 +35,37 @@ jobs:
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
 
-      # Validate environment variables
-      - name: Validate environment variables
+      - name: Verify environment variables
         run: |
           if [[ -z "$DB_PASSWORD" || -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_HOST" || -z "$DB_PORT" ]]; then
             echo "Error: One or more environment variables are not set!"
             exit 1
           fi
+          echo "DB_PASSWORD is set"
+          echo "DB_NAME is set"
+          echo "DB_USER is set"
+          echo "DB_HOST is set"
+          echo "DB_PORT is set"
 
-      # Debug environment (optional, for troubleshooting)
-      - name: Debug environment
-        run: env
-
-      # Start PostgreSQL service and create the database and user
       - name: Start PostgreSQL service
         run: |
-          sudo service postgresql start  # Start PostgreSQL
-          sleep 20  # Wait for PostgreSQL to initialize
-          sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};" || echo "Database may already exist"
-          sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';" || echo "User may already exist"
+          sudo service postgresql start
+          sleep 15
+          sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};"
+          sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
           sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
 
-      # Install project dependencies
       - name: Install dependencies
         run: |
           python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      # Run tests
       - name: Run tests
         run: |
-          python -m pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+          export PYTHONPATH=.
+          pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
