@@ -35,6 +35,12 @@ jobs:
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
 
+      - name: Check environment variables
+        run: |
+          echo "DB_PASSWORD=${DB_PASSWORD}"
+          echo "DB_NAME=${DB_NAME}"
+          echo "DB_USER=${DB_USER}"
+
       - name: Start PostgreSQL service
         run: |
           sudo service postgresql start  # Запускаем PostgreSQL
@@ -53,4 +59,5 @@ jobs:
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
