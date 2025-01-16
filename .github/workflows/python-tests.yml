@@ -3,14 +3,14 @@ name: Run Tests
 on:
   push:
     branches:
-      - main  # Запускать только для пушей в ветку 'main'
+      - main
   pull_request:
     branches:
-      - main  # Запускать на PR в ветку 'main'
+      - main
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # Используется Ubuntu
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
@@ -24,8 +24,8 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libpq-dev libx11-dev libxext-dev  # Устанавливаем дополнительные зависимости
-          sudo apt-get install -y postgresql postgresql-contrib  # Устанавливаем PostgreSQL
+          sudo apt-get install -y libpq-dev libx11-dev libxext-dev
+          sudo apt-get install -y postgresql postgresql-contrib
 
       - name: Set up environment variables
         run: |
@@ -38,21 +38,19 @@ jobs:
       - name: Start PostgreSQL service
         run: |
           sudo service postgresql start  # Запускаем PostgreSQL
-          # Ждем несколько секунд, чтобы PostgreSQL был готов
-          sleep 15
-          # Создаем тестовую базу данных и пользователя
-          sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};"
-          sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
-          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
+          sleep 15  # Ждем несколько секунд
+          sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};"  # Создаем базу данных
+          sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"  # Создаем пользователя
+          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"  # Предоставляем привилегии
 
       - name: Install dependencies
         run: |
-          python -m ensurepip --upgrade  # Обновляем pip, если необходимо
+          python -m ensurepip --upgrade
           python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt  # Устанавливаем зависимости без кэша
+          pip install --no-cache-dir -r requirements.txt
 
       - name: Run tests
         run: |
           export PYTHONPATH=.
-          pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short  # Запуск тестов с улучшениями
+          pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
 
