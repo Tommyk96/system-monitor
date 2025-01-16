@@ -30,5 +30,4 @@ jobs:
       - name: Run tests
         run: |
           export PYTHONPATH=.
-          pytest --cache-clear  # Очистить кэш и сразу запустить тесты
-
+          pytest -v --cache-clear  # Очистить кэш и сразу запустить тесты
