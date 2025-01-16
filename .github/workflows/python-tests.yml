@@ -39,23 +39,26 @@ jobs:
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
 
-      # Print environment variables for debugging (if needed)
-      - name: Check environment variables
+      # Validate environment variables
+      - name: Validate environment variables
         run: |
-          echo "DB_PASSWORD=${DB_PASSWORD}"
-          echo "DB_NAME=${DB_NAME}"
-          echo "DB_USER=${DB_USER}"
-          echo "DB_HOST=${DB_HOST}"
-          echo "DB_PORT=${DB_PORT}"
+          if [[ -z "$DB_PASSWORD" || -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_HOST" || -z "$DB_PORT" ]]; then
+            echo "Error: One or more environment variables are not set!"
+            exit 1
+          fi
+
+      # Debug environment (optional, for troubleshooting)
+      - name: Debug environment
+        run: env
 
       # Start PostgreSQL service and create the database and user
       - name: Start PostgreSQL service
         run: |
-          sudo service postgresql start  # Запускаем PostgreSQL
-          sleep 15  # Ждем несколько секунд, чтобы PostgreSQL был готов
-          sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};"  # Создаем базу данных
-          sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"  # Создаем пользователя
-          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"  # Предоставляем привилегии
+          sudo service postgresql start  # Start PostgreSQL
+          sleep 20  # Wait for PostgreSQL to initialize
+          sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};" || echo "Database may already exist"
+          sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';" || echo "User may already exist"
+          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
 
       # Install project dependencies
       - name: Install dependencies
@@ -67,8 +70,8 @@ jobs:
       # Run tests
       - name: Run tests
         run: |
-          export PYTHONPATH=.
-          pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+          python -m pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
