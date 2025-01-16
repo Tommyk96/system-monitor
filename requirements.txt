@@ -1,4 +1,4 @@
 psutil
 PyQt5
 psycopg2
-pip install pytest
+pytest
