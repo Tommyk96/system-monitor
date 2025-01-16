@@ -13,20 +13,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Шаг 1: Проверка репозитория
       - name: Check out repository
         uses: actions/checkout@v3
 
+      # Шаг 2: Установка Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
+      # Шаг 3: Установка системных зависимостей
       - name: Install system dependencies
         run: |
-          sudo apt-get update
+          sudo apt-get update -qq
           sudo apt-get install -y libpq-dev libx11-dev libxext-dev
           sudo apt-get install -y postgresql postgresql-contrib
 
+      # Шаг 4: Установка переменных окружения
       - name: Set up environment variables
         run: |
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
@@ -35,36 +39,50 @@ jobs:
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
 
+      # Шаг 5: Проверка переменных окружения
       - name: Verify environment variables
+        shell: bash
         run: |
           if [[ -z "$DB_PASSWORD" || -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_HOST" || -z "$DB_PORT" ]]; then
             echo "Error: One or more environment variables are not set!"
             exit 1
+          else
+            echo "All required environment variables are set:"
+            echo "DB_NAME=$DB_NAME"
+            echo "DB_USER=$DB_USER"
+            echo "DB_HOST=$DB_HOST"
+            echo "DB_PORT=$DB_PORT"
           fi
-          echo "DB_PASSWORD is set"
-          echo "DB_NAME is set"
-          echo "DB_USER is set"
-          echo "DB_HOST is set"
-          echo "DB_PORT is set"
 
+      # Шаг 6: Запуск службы PostgreSQL и настройка базы данных
       - name: Start PostgreSQL service
         run: |
           sudo service postgresql start
-          sleep 15
-          sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};"
-          sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
-          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
+          sleep 10 # Подождите, пока PostgreSQL полностью запустится
+          echo "Creating database and user..."
+          sudo -u postgres psql <<EOF
+            CREATE DATABASE $DB_NAME;
+            CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
+            GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
+          EOF
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
+      # Шаг 7: Установка Python-зависимостей
       - name: Install dependencies
         run: |
           python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
+      # Шаг 8: Запуск тестов
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
