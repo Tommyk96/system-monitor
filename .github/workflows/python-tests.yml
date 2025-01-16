@@ -24,7 +24,15 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libpq-dev libx11-dev libxext-dev  # Установите дополнительные зависимости, если необходимо
+          sudo apt-get install -y libpq-dev libx11-dev libxext-dev  # Устанавливаем дополнительные зависимости
+          sudo apt-get install -y postgresql postgresql-contrib  # Устанавливаем PostgreSQL
+
+      - name: Start PostgreSQL service
+        run: |
+          sudo service postgresql start  # Запускаем PostgreSQL
+          sudo -u postgres psql -c "CREATE DATABASE test_db;"  # Создаем тестовую базу данных
+          sudo -u postgres psql -c "CREATE USER test_user WITH PASSWORD 'test_password';"  # Создаем пользователя
+          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE test_db TO test_user;"  # Назначаем права
 
       - name: Install dependencies
         run: |
