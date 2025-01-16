@@ -31,19 +31,19 @@ jobs:
         run: |
           sudo service postgresql start  # Запускаем PostgreSQL
           # Ждем несколько секунд, чтобы PostgreSQL был готов
-          sleep 10
+          sleep 15
           # Создаем тестовую базу данных и пользователя
-          sudo -u postgres psql -c "CREATE DATABASE test_db;"
-          sudo -u postgres psql -c "CREATE USER test_user WITH PASSWORD 'test_password';"
-          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE test_db TO test_user;"
+          sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};"
+          sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
+          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
 
       - name: Set up environment variables
         run: |
-          echo "DB_PASSWORD=test_password" >> $GITHUB_ENV
-          echo "DB_NAME=test_db" >> $GITHUB_ENV
-          echo "DB_USER=test_user" >> $GITHUB_ENV
-          echo "DB_HOST=localhost" >> $GITHUB_ENV
-          echo "DB_PORT=5432" >> $GITHUB_ENV
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+          echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
@@ -55,5 +55,4 @@ jobs:
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short  # Запуск тестов с улучшениями
-
 
