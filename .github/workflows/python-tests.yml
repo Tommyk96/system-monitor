@@ -62,11 +62,23 @@ jobs:
             echo "PostgreSQL did not become ready in time!"
             exit 1
           fi
+      
 
+      - name: Check PostgreSQL logs
+        run: |
+          docker logs postgres
+
+      
+      - name: Check PostgreSQL container status
+        run: |
+          docker ps
+
+    
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
