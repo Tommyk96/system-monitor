@@ -42,7 +42,6 @@ jobs:
       # Шаг 5: Проверка переменных окружения
       - name: Verify environment variables
         run: |
-          source $GITHUB_ENV
           if [[ -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_PASSWORD" || -z "$DB_HOST" || -z "$DB_PORT" ]]; then
             echo "Error: One or more environment variables are not set!"
             exit 1
@@ -81,6 +80,7 @@ jobs:
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
