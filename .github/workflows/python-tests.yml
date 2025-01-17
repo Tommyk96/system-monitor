@@ -33,20 +33,21 @@ jobs:
       # Шаг 4: Установка переменных окружения
       - name: Set up environment variables
         run: |
-          echo "${{ secrets.DB_ENV_VARS }}" >> $GITHUB_ENV
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+          echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
 
       # Шаг 5: Проверка переменных окружения
       - name: Verify environment variables
-        shell: bash
         run: |
-          set -e
           source $GITHUB_ENV
-          if [[ -z "$DB_PASSWORD" || -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_HOST" || -z "$DB_PORT" ]]; then
+          if [[ -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_PASSWORD" || -z "$DB_HOST" || -z "$DB_PORT" ]]; then
             echo "Error: One or more environment variables are not set!"
             exit 1
           else
             echo "All required environment variables are set:"
-            echo "DB_PASSWORD=<hidden>"
             echo "DB_NAME=$DB_NAME"
             echo "DB_USER=$DB_USER"
             echo "DB_HOST=$DB_HOST"
@@ -64,18 +65,11 @@ jobs:
           sudo service postgresql start
           sleep 10
           echo "Creating database and user..."
-          sudo -u postgres psql -v ON_ERROR_STOP=1 \
-            -v db_name="$DB_NAME" \
-            -v db_user="$DB_USER" \
-            -v db_password="$DB_PASSWORD" <<-EOF
-            CREATE DATABASE $DB_NAME;
-            CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
-            GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
-          EOF
+          psql -U postgres -c "CREATE DATABASE $DB_NAME;"
+          psql -U postgres -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+          psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
         env:
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          PGUSER: postgres
 
       # Шаг 8: Установка Python-зависимостей
       - name: Install dependencies
@@ -89,6 +83,7 @@ jobs:
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
