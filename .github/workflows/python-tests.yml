@@ -16,13 +16,13 @@ jobs:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.DB_NAME }}
+          POSTGRES_USER: ${{ fromJson(secrets.DB_ENV_VARS).DB_USER }}
+          POSTGRES_PASSWORD: ${{ fromJson(secrets.DB_ENV_VARS).DB_PASSWORD }}
+          POSTGRES_DB: ${{ fromJson(secrets.DB_ENV_VARS).DB_NAME }}
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }}"
+          --health-cmd="pg_isready -U ${{ fromJson(secrets.DB_ENV_VARS).DB_USER }} -d ${{ fromJson(secrets.DB_ENV_VARS).DB_NAME }}"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -44,23 +44,26 @@ jobs:
 
       - name: Set up environment variables from secrets
         run: |
-          export DB_NAME=${{ secrets.DB_NAME }}
-          export DB_USER=${{ secrets.DB_USER }}
-          export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_ENV_VARS="${{ secrets.DB_ENV_VARS }}"
+          DB_USER=$(echo $DB_ENV_VARS | jq -r '.DB_USER')
+          DB_PASSWORD=$(echo $DB_ENV_VARS | jq -r '.DB_PASSWORD')
+          DB_NAME=$(echo $DB_ENV_VARS | jq -r '.DB_NAME')
+          
+          echo "DB_USER=${DB_USER}"
+          echo "DB_PASSWORD=${DB_PASSWORD}"
+          echo "DB_NAME=${DB_NAME}"
+
+          export DB_USER
+          export DB_PASSWORD
+          export DB_NAME
           export DB_HOST="localhost"
           export DB_PORT="5432"
-
-      - name: Verify environment variables
-        run: |
-          echo "DB_NAME=$DB_NAME"
-          echo "DB_USER=$DB_USER"
-          echo "DB_HOST=$DB_HOST"
-          echo "DB_PORT=$DB_PORT"
 
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
