@@ -12,6 +12,19 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:latest
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
       # Step 1: Check out repository
       - name: Check out repository
@@ -30,17 +43,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      # Step 4: Load environment variables from .env file
-      - name: Load environment variables from .env file
+      # Step 4: Set up environment variables from .env file
+      - name: Set up environment variables from .env
         run: |
-          echo "Loading environment variables from .env file"
-          # Ensure the .env file exists and is loaded
-          if [ -f .env ]; then
-            source .env
-          else
-            echo ".env file not found!"
-            exit 1
-          fi
+          echo "DB_NAME=" >> $GITHUB_ENV
+          echo "DB_USER=" >> $GITHUB_ENV
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
+          echo "DB_HOST=localhost" >> $GITHUB_ENV
+          echo "DB_PORT=5432" >> $GITHUB_ENV
 
       # Step 5: Verify environment variables
       - name: Verify environment variables
@@ -55,6 +65,7 @@ jobs:
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
