@@ -18,7 +18,9 @@ jobs:
         ports:
           - 5432:5432
         env:
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: testdb
         options: >-
           --health-cmd="pg_isready -U postgres"
           --health-interval=10s
@@ -43,28 +45,48 @@ jobs:
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      # Step 4: Set up environment variables from .env file
-      - name: Set up environment variables from .env
+      # Step 4: Wait for PostgreSQL to be ready
+      - name: Wait for PostgreSQL
         run: |
-          echo "DB_NAME=" >> $GITHUB_ENV
-          echo "DB_USER=" >> $GITHUB_ENV
+          for i in {1..10}; do
+            if pg_isready -h localhost -U postgres -d testdb; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL..."
+            sleep 5
+          done
+
+      # Step 5: Set up environment variables
+      - name: Set up environment variables
+        run: |
+          echo "DB_NAME=system_data" >> $GITHUB_ENV
+          echo "DB_USER=admin_user" >> $GITHUB_ENV
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
           echo "DB_HOST=localhost" >> $GITHUB_ENV
           echo "DB_PORT=5432" >> $GITHUB_ENV
 
-      # Step 5: Verify environment variables
+      # Step 6: Verify environment variables
       - name: Verify environment variables
         run: |
           echo "DB_NAME=$DB_NAME"
           echo "DB_USER=$DB_USER"
+          echo "DB_PASSWORD=$DB_PASSWORD"
           echo "DB_HOST=$DB_HOST"
           echo "DB_PORT=$DB_PORT"
 
-      # Step 6: Run tests
+      # Step 7: Run tests
       - name: Run tests
+        env:
+          DB_NAME: ${{ env.DB_NAME }}
+          DB_USER: ${{ env.DB_USER }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+          DB_HOST: ${{ env.DB_HOST }}
+          DB_PORT: ${{ env.DB_PORT }}
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
