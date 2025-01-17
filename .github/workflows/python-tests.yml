@@ -12,35 +12,44 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }}"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
-      # Step 1: Check out repository
       - name: Check out repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      # Step 4: Load environment variables from .env file
-      - name: Load environment variables from .env file
+      - name: Set up environment variables from secrets
         run: |
-          if [ -f .env ]; then
-            echo "Loading environment variables from .env file"
-            export $(cat .env | xargs) # Загружаем переменные окружения из .env
-          else
-            echo "No .env file found"
-          fi
+          export DB_NAME=${{ secrets.DB_NAME }}
+          export DB_USER=${{ secrets.DB_USER }}
+          export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          export DB_HOST="localhost"
+          export DB_PORT="5432"
 
-      # Step 5: Verify environment variables (optional for debugging)
       - name: Verify environment variables
         run: |
           echo "DB_NAME=$DB_NAME"
@@ -48,11 +57,13 @@ jobs:
           echo "DB_HOST=$DB_HOST"
           echo "DB_PORT=$DB_PORT"
 
-      # Step 6: Run tests
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
+
+
 
 
 
