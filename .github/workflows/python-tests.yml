@@ -18,9 +18,8 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          POSTGRES_DB: testdb
+          POSTGRES_DB: system_data
         options: >-
           --health-cmd="pg_isready -U postgres"
           --health-interval=10s
@@ -28,11 +27,11 @@ jobs:
           --health-retries=5
 
     steps:
-      # Step 1: Check out repository
+      # Step 1: Check out the repository
       - name: Check out repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Python
+      # Step 2: Set up Python environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -45,20 +44,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      # Step 4: Wait for PostgreSQL to be ready
-      - name: Wait for PostgreSQL
-        run: |
-          for i in {1..10}; do
-            if pg_isready -h localhost -U postgres -d testdb; then
-              echo "PostgreSQL is ready"
-              break
-            fi
-            echo "Waiting for PostgreSQL..."
-            sleep 5
-          done
-
-      # Step 5: Set up environment variables
-      - name: Set up environment variables
+      # Step 4: Set up environment variables from .env file
+      - name: Set up environment variables from .env
         run: |
           echo "DB_NAME=system_data" >> $GITHUB_ENV
           echo "DB_USER=admin_user" >> $GITHUB_ENV
@@ -66,26 +53,20 @@ jobs:
           echo "DB_HOST=localhost" >> $GITHUB_ENV
           echo "DB_PORT=5432" >> $GITHUB_ENV
 
-      # Step 6: Verify environment variables
+      # Step 5: Verify environment variables
       - name: Verify environment variables
         run: |
           echo "DB_NAME=$DB_NAME"
           echo "DB_USER=$DB_USER"
-          echo "DB_PASSWORD=$DB_PASSWORD"
           echo "DB_HOST=$DB_HOST"
           echo "DB_PORT=$DB_PORT"
 
-      # Step 7: Run tests
+      # Step 6: Run tests
       - name: Run tests
-        env:
-          DB_NAME: ${{ env.DB_NAME }}
-          DB_USER: ${{ env.DB_USER }}
-          DB_PASSWORD: ${{ env.DB_PASSWORD }}
-          DB_HOST: ${{ env.DB_HOST }}
-          DB_PORT: ${{ env.DB_PORT }}
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
