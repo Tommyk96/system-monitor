@@ -12,57 +12,53 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: ${{ fromJson(secrets.DB_ENV_VARS).DB_USER }}
-          POSTGRES_PASSWORD: ${{ fromJson(secrets.DB_ENV_VARS).DB_PASSWORD }}
-          POSTGRES_DB: ${{ fromJson(secrets.DB_ENV_VARS).DB_NAME }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U ${{ fromJson(secrets.DB_ENV_VARS).DB_USER }} -d ${{ fromJson(secrets.DB_ENV_VARS).DB_NAME }}"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
+      # Step 1: Check out repository
       - name: Check out repository
         uses: actions/checkout@v3
 
+      # Step 2: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      - name: Set up environment variables from secrets
+      # Step 4: Load environment variables from .env file
+      - name: Load environment variables from .env file
         run: |
-          DB_ENV_VARS="${{ secrets.DB_ENV_VARS }}"
-          DB_USER=$(echo $DB_ENV_VARS | jq -r '.DB_USER')
-          DB_PASSWORD=$(echo $DB_ENV_VARS | jq -r '.DB_PASSWORD')
-          DB_NAME=$(echo $DB_ENV_VARS | jq -r '.DB_NAME')
-          
-          echo "DB_USER=${DB_USER}"
-          echo "DB_PASSWORD=${DB_PASSWORD}"
-          echo "DB_NAME=${DB_NAME}"
+          echo "Loading environment variables from .env file"
+          # Ensure the .env file exists and is loaded
+          if [ -f .env ]; then
+            source .env
+          else
+            echo ".env file not found!"
+            exit 1
+          fi
 
-          export DB_USER
-          export DB_PASSWORD
-          export DB_NAME
-          export DB_HOST="localhost"
-          export DB_PORT="5432"
+      # Step 5: Verify environment variables
+      - name: Verify environment variables
+        run: |
+          echo "DB_NAME=$DB_NAME"
+          echo "DB_USER=$DB_USER"
+          echo "DB_HOST=$DB_HOST"
+          echo "DB_PORT=$DB_PORT"
 
+      # Step 6: Run tests
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
+
+
+
 
 
 
