@@ -2,13 +2,19 @@ import pytest
 import os
 import psycopg2
 from PyQt5.QtWidgets import QApplication
+
+import sys
+sys.path.append('/home/fantomas/systemcp')
 from main import SystemMonitor, connect_db
+
+
 
 # Фикстура для настройки приложения и окна PyQt
 @pytest.fixture(scope="module")
 def app():
     app = QApplication([])
     yield app
+    app.quit()  # Завершаем приложение после тестов
 
 
 @pytest.fixture
@@ -94,10 +100,12 @@ def test_start_recording(system_monitor):
     assert system_monitor.is_recording is False, "Запись не остановилась"
 
 if __name__ == "__main__":
-    from PyQt5.QtWidgets import QApplication
-    app = QApplication([])
+    # Используем QCoreApplication для тестов без графического интерфейса
+    from PyQt5.QtCore import QCoreApplication
+    app = QCoreApplication([])
     monitor = SystemMonitor()
     print("SystemMonitor initialized successfully")
-    app.quit() 
+    app.quit()
+
 
 
