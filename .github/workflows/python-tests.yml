@@ -16,7 +16,7 @@ jobs:
       postgres:
         image: postgres:latest
         ports:
-          - 5432:5432
+          - 5433:5432  # Внешний порт 5433, контейнер использует 5432
         env:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: system_data
@@ -48,7 +48,7 @@ jobs:
           echo "DB_USER=admin_user" >> $GITHUB_ENV
           echo "DB_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> $GITHUB_ENV
           echo "DB_HOST=postgres" >> $GITHUB_ENV
-          echo "DB_PORT=5432" >> $GITHUB_ENV
+          echo "DB_PORT=5433" >> $GITHUB_ENV  # Используем порт 5433
 
       - name: Wait for PostgreSQL to be ready
         run: |
@@ -64,48 +64,7 @@ jobs:
             exit 1
           fi
 
-      - name: Check PostgreSQL health status
-        run: |
-          docker inspect --format '{{json .State.Health}}' postgres
-
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
