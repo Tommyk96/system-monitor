@@ -16,7 +16,7 @@ jobs:
       postgres:
         image: postgres:latest
         ports:
-          - 5432:5433  # Внешний порт 5433, контейнер использует 5432
+          - 5433:5433  # Внешний порт 5433, контейнер использует 5432
         env:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: system_data
