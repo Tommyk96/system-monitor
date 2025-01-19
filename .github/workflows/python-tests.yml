@@ -63,18 +63,15 @@ jobs:
             exit 1
           fi
 
-      - name: Check PostgreSQL logs
+      - name: Check PostgreSQL health status
         run: |
-          docker logs postgres
-
-      - name: Check PostgreSQL container status
-        run: |
-          docker ps
+          docker inspect --format '{{json .State.Health}}' postgres
 
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
 
