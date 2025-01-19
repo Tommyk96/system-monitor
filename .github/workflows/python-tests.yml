@@ -16,7 +16,7 @@ jobs:
       postgres:
         image: postgres:latest
         ports:
-          - 5433:5433  # Внешний порт 5433, контейнер использует 5432
+          - 5432:5432  # Внешний порт 5432, контейнер использует 5432
         env:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: system_data
@@ -48,13 +48,13 @@ jobs:
           echo "DB_USER=admin_user" >> $GITHUB_ENV
           echo "DB_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> $GITHUB_ENV
           echo "DB_HOST=postgres" >> $GITHUB_ENV
-          echo "DB_PORT=5433" >> $GITHUB_ENV  # Используем порт 5433
+          echo "DB_PORT=5432" >> $GITHUB_ENV
 
       - name: Wait for PostgreSQL to be ready
         run: |
           attempt=0
           sleep 10  # Добавляем небольшую задержку
-          until pg_isready -h postgres -U admin_user -d system_data -p 5433 -t 60 || [ $attempt -ge 30 ]; do
+          until pg_isready -h postgres -U admin_user -d system_data -p 5432 -t 60 || [ $attempt -ge 30 ]; do
             echo "Waiting for PostgreSQL to be ready... Attempt $((attempt+1))"
             sleep 5
             attempt=$((attempt+1))
