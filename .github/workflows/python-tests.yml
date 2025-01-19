@@ -16,7 +16,7 @@ jobs:
       postgres:
         image: postgres:latest
         ports:
-          - 5433:5433  # Внешний порт 5433, контейнер использует 5432
+          - 5432:5433  # Внешний порт 5433, контейнер использует 5432
         env:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: system_data
@@ -54,7 +54,7 @@ jobs:
         run: |
           attempt=0
           sleep 10  # Добавляем небольшую задержку
-          until pg_isready -h postgres -U admin_user -d system_data -t 60 || [ $attempt -ge 30 ]; do
+          until pg_isready -h postgres -U admin_user -d system_data -p 5433 -t 60 || [ $attempt -ge 30 ]; do
             echo "Waiting for PostgreSQL to be ready... Attempt $((attempt+1))"
             sleep 5
             attempt=$((attempt+1))
