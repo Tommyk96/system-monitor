@@ -42,11 +42,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
-
       - name: Set up environment variables from .env
         run: |
           echo "DB_NAME=system_data" >> $GITHUB_ENV
@@ -58,24 +53,25 @@ jobs:
       - name: Wait for PostgreSQL to be ready
         run: |
           attempt=0
-          sleep 10  # Добавляем небольшую задержку
-          until pg_isready -h postgres -U admin_user -d system_data -p 5432 -t 60 || [ $attempt -ge 30 ]; do
+          sleep 10  # Увеличиваем начальную задержку
+          until pg_isready -h postgres -U admin_user -d system_data -p 5432 -t 120 || [ $attempt -ge 60 ]; do
             echo "Waiting for PostgreSQL to be ready... Attempt $((attempt+1))"
-            sleep 5
+            sleep 10  # Увеличиваем интервал ожидания между попытками
             attempt=$((attempt+1))
           done
-          if [ $attempt -ge 30 ]; then
+          if [ $attempt -ge 60 ]; then
             echo "PostgreSQL did not become ready in time!"
             exit 1
           fi
 
-      - name: Run docker-compose
+      - name: Check PostgreSQL logs
         run: |
-          docker-compose -f docker-compose.yml up -d
+          docker logs $(docker ps -q -f name=postgres)
 
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
 
 
