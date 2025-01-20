@@ -64,7 +64,12 @@ jobs:
             exit 1
           fi
 
+      - name: Check PostgreSQL logs
+        run: |
+          docker logs postgres
+
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
+
