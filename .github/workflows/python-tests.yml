@@ -50,16 +50,20 @@ jobs:
           echo "DB_HOST=postgres" >> $GITHUB_ENV
           echo "DB_PORT=5432" >> $GITHUB_ENV
 
+      - name: Check if PostgreSQL container is running
+        run: |
+          docker ps -a
+
       - name: Wait for PostgreSQL to be ready
         run: |
           attempt=0
           sleep 10  # Увеличиваем начальную задержку
-          until pg_isready -h postgres -U admin_user -d system_data -p 5432 -t 120 || [ $attempt -ge 60 ]; do
+          until pg_isready -h postgres -U admin_user -d system_data -p 5432 -t 300 || [ $attempt -ge 100 ]; do
             echo "Waiting for PostgreSQL to be ready... Attempt $((attempt+1))"
-            sleep 10  # Увеличиваем интервал ожидания между попытками
+            sleep 3  # Увеличиваем интервал ожидания
             attempt=$((attempt+1))
           done
-          if [ $attempt -ge 60 ]; then
+          if [ $attempt -ge 100 ]; then
             echo "PostgreSQL did not become ready in time!"
             exit 1
           fi
@@ -67,6 +71,10 @@ jobs:
       - name: Check PostgreSQL logs
         run: |
           docker logs $(docker ps -q -f name=postgres)
+
+      - name: Test PostgreSQL connection
+        run: |
+          docker exec -it $(docker ps -q -f name=postgres) psql -U admin_user -d system_data -c "SELECT 1"
 
       - name: Run tests
         run: |
