@@ -31,15 +31,21 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Install Python and pip
-        run: |
-          sudo apt update
-          sudo apt install -y python3-pip
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip
+          python -m ensurepip --upgrade
+          python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
 
       - name: Set up environment variables from .env
         run: |
@@ -48,10 +54,6 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> $GITHUB_ENV
           echo "DB_HOST=postgres" >> $GITHUB_ENV
           echo "DB_PORT=5432" >> $GITHUB_ENV
-
-      - name: Build and start containers using Docker Compose
-        run: |
-          docker-compose -f docker-compose.yml up -d
 
       - name: Wait for PostgreSQL to be ready
         run: |
@@ -67,17 +69,13 @@ jobs:
             exit 1
           fi
 
-      - name: Check PostgreSQL logs
+      - name: Run docker-compose
         run: |
-          docker logs postgres || echo "No logs found"
+          docker-compose -f docker-compose.yml up -d
 
       - name: Run tests
         run: |
           export PYTHONPATH=.
           pytest -v --maxfail=1 --disable-warnings --cache-clear --tb=short
-
-      - name: Stop and remove Docker containers
-        run: |
-          docker-compose down
 
 
